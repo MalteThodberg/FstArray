@@ -1,0 +1,21 @@
+Package: FstArray
+Type: Package
+Title: Bioconductor-friendly fst-files
+Version: 0.1.0
+Author: Malte Thodberg
+Maintainer: Malte Thodberg <maltethodberg@gmail.com>
+Description: Adds DelayedArray and BiocIO wrappers for using fst-files in Bioconductor. Includes functions for simple IO (FstFile), on-disk matrices (FstArray) and DataFrames (FstFrame).
+License: GPL (>= 3)
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.3.2
+Depends: 
+    BiocIO,
+    DelayedArray
+Imports: 
+    BiocGenerics,
+    checkmate,
+    fst,
+    methods,
+    S4Vectors,
+    tools

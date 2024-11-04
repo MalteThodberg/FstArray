@@ -1,0 +1,103 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# FstArray
+
+<!-- badges: start -->
+<!-- badges: end -->
+
+The FstArray R-package provides a DelayedArray array backend for the .fst file format. This includes FstArray for matrix-like data (multiple columns of the same type) and FstColumnVector for data.frame-like data (columns of different types).
+
+FstArray only supports reading from .fst-files. The FstFile-class provides functionality for reading, writing and quering .fst-file metadata.
+
+See the `DelayedArray`, `HDF5Array` and `SQLDataFrame` packages for more information.
+
+## Getting the package
+
+Install from github using:
+
+``` r
+devtools::install_github("MalteThodberg/FstArray")
+```
+
+Load the package:
+```{r load, message=FALSE}
+library(FstArray)
+```
+
+## Quick usage
+
+IO and introspection with the `FstFile`-class:
+
+```{r FstFile}
+# Simulate large data.frame
+large_df <- DataFrame(A=rnorm(1e6),
+                      B=runif(1e6),
+                      C=rpois(1e6, 1),
+                      D=sample(letters, 1e6, replace=TRUE),
+                      E=factor(sample(LETTERS, 1e6, replace=TRUE)))
+object.size(large_df)
+
+# Export
+fst_fname <- tempfile(fileext=".fst")
+export(large_df, fst_fname)
+
+# Import everything
+import(fst_fname)
+
+# Import subset of rows and columns
+import(fst_fname, columns=c("A", "E"), from=100, to=150)
+
+# Introspection
+ff <- FstFile(fst_fname)
+resource(ff)
+dim(ff)
+colnames(ff)
+type(ff)
+```
+
+Use .fst files to store array data (all columns of the same type) with the `FstArray`-class:
+
+```{r FstArray}
+# FstArray doesn't read the data from disk until needed
+fa <- FstArray(fst_fname)
+
+# Resulting object is small, as data is only read from disk when needed.
+object.size(fa)
+
+# The type of the resulting array can be directly controlled
+fa_int <- FstArray(fst_fname, type="integer")
+
+# The default is to use all numeric and integer columns, but this can be manually specified
+fa_char <- FstArray(fst_fname, columns=c("D", "E"))
+
+# All DelayedArray operations are supported for FstArray
+fa + 1
+rowSums(fa[100:110,])
+# See DelayedArray for more
+```
+
+Use .fst files to store data.frame data (columns of different types) using the `FstColumnVector`-class:
+
+```{r FstColumnVector}
+# FstColumnVectors
+fcvs <- FstColumnVectors(fst_fname)
+
+# Delayed operations are supported for each column, causing it to be demoted to a 1D DelayedArray tracking the delayed operations.
+fcvs |> 
+    subset(D == "a") |> 
+    transform(F = A+B) |>
+  transform(G = as.vector(F)) # Force delayed operations using as.vector
+```
